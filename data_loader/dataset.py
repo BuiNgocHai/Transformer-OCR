@@ -202,7 +202,11 @@ class GetDataset(Dataset):
         label = self.samples[index].label_text
         img_path = self.samples[index].file_path
         try:
-            img = cv2.imread(img_path, cv2.IMREAD_GRAYSCALE)
+            img = cv2.imread(img_path) / 255.
+            # Channels-first
+            img = np.transpose(img, (2, 0, 1))
+            # As pytorch tensor
+            img = torch.from_numpy(img).float()
 
             # make dummy image and dummy label for corrupted image.
             if any(s < 1 for s in img.shape[:2]):
@@ -326,7 +330,54 @@ class InferAlignCollate(object):
             image_tensors = torch.cat([t.unsqueeze(0) for t in image_list], 0)
         return image_tensors
 
-def get_predictor(self, type_pred, characters):
+def subsequent_mask(size):
+    "Mask out subsequent positions."
+    attn_shape = (1, size, size)
+    subsequent_mask = np.triu(np.ones(attn_shape), k=1).astype('uint8')
+    return torch.from_numpy(subsequent_mask) == 0
+
+def make_std_mask(tgt, pad):
+        "Create a mask to hide padding and future words."
+        tgt_mask = (tgt != pad).unsqueeze(-2)
+        tgt_mask = tgt_mask & Variable(
+            subsequent_mask(tgt.size(-1)).type_as(tgt_mask.data))
+        return tgt_mask
+
+class Batch:
+    "Object for holding a batch of data with mask during training."
+    def __init__(self, imgs, trg_y, trg, pad=0):
+        self.imgs = Variable(imgs.cuda(), requires_grad=False)
+        self.src_mask = Variable(torch.from_numpy(np.ones([imgs.size(0), 1, 36], dtype=np.bool)).cuda())
+        if trg is not None:
+            self.trg = Variable(trg.cuda(), requires_grad=False)
+            self.trg_y = Variable(trg_y.cuda(), requires_grad=False)
+            self.trg_mask = \
+                self.make_std_mask(self.trg, pad)
+            self.ntokens = (self.trg_y != pad).data.sum()
+
+    @staticmethod
+    def make_std_mask(tgt, pad):
+        "Create a mask to hide padding and future words."
+        tgt_mask = (tgt != pad).unsqueeze(-2)
+        tgt_mask = tgt_mask & Variable(
+            subsequent_mask(tgt.size(-1)).type_as(tgt_mask.data))
+        return Variable(tgt_mask.cuda(), requires_grad=False)
+
+class FeatureExtractor(nn.Module):
+    def __init__(self, submodule, name):
+        super(FeatureExtractor, self).__init__()
+        self.submodule = submodule
+        self.name = name
+    def forward(self, x):
+        for name, module in self.submodule._modules.items():
+            x = module(x)
+            if name is self.name:
+                b = x.size(0)
+                c = x.size(1)
+                return x.view(b, c, -1).permute(0, 2, 1)
+        return None
+
+def get_predictor(type_pred, characters):
     dict_predictors = {
         "ctc": tools.CTCLabelConverter,
         "ace": tools.AggregationCrossEntropyLoss,
@@ -366,5 +417,5 @@ if __name__ == "__main__":
     predictor = get_predictor(\
         opt.prediction, dataset_loader.vocabulary)
     vocabulary = predictor.character
-    print('Number of new built characters: {0}'.format(len(self.vocabulary)))
+    print('Number of new built characters: {0}'.format(len(vocabulary)))
 
