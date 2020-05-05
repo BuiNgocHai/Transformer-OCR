@@ -353,6 +353,8 @@ if __name__ == "__main__":
     parser.add_argument('--padding', action='store_false', help='whether to keep ratio then pad for image resize')
     parser.add_argument('--augment', action='store_false', help='whether to augment data or not')
 
+    """ Model Architecture """
+    parser.add_argument('--prediction', type=str, default='ctc', help='Prediction stage. ctc|attn|ace')
     opt = parser.parse_known_args()[0]
 
     characters = None
