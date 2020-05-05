@@ -25,6 +25,8 @@ import torchvision.transforms as transforms
 from torch.utils.data import Dataset, ConcatDataset, Subset
 from data_loader.normalize_text import normalize_text
 from data_loader.augment_data import get_augmenter
+import seq2seq.training.tools as tools
+
 LOGGER = logging.getLogger(__name__)
 
 __author__ = "ThanhHoang"
