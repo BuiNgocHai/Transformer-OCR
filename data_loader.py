@@ -334,27 +334,23 @@ def get_predictor(self, type_pred, characters):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     """ Data params """
-    parser.add_argument('--experiment_name', default='ocr', help='Where to store logs and models')
-    # parser.add_argument('--data_path', default='/home/kristopher/workspace/data/ocr_data', help='path to dataset')
-    # parser.add_argument('--save_path', type=str, default='./model_weights', help='Path to save logs and models')
     parser.add_argument('--data_path', default='/opt/ml/input/data/train', help='path to dataset')
-    parser.add_argument('--save_path', type=str, default='/opt/ml/model', help='Path to save logs and models')
-
-    parser.add_argument('--pretrained_path', type=str, default="./pretrained_models/general_model.pt", help='Path to pretrained models')
+    
+    
     parser.add_argument('--train_file', default='train.json', help='name of train label file')
     parser.add_argument('--val_file', default='val.json', help='name of train label val')
     parser.add_argument('--test_file', default='test.json', help='name of train label test')
-    parser.add_argument('--manualSeed', type=int, default=1111, help='for random seed setting')
     parser.add_argument('--workers', type=int, help='number of data loading workers', default=4)
 
+    """ Training params """
+    parser.add_argument('--batch_size', type=int, default=32, help='input batch size')
     """ Data processing """
-    parser.add_argument('--data_ratio', type=float, default=0.8, help='total data usage ratio, this ratio is multiplied to total number of data.')
-    parser.add_argument('--batch_max_length', type=int, default=200, help='maximum-label-length')
     parser.add_argument('--img_height', type=int, default=64, help='the height of the input image')
     parser.add_argument('--img_width', type=int, default=1500, help='the width of the input image, before=800')
     parser.add_argument('--normalize_text', action='store_false', help='normalizing text label')
     parser.add_argument('--padding', action='store_false', help='whether to keep ratio then pad for image resize')
     parser.add_argument('--augment', action='store_false', help='whether to augment data or not')
+
     opt = parser.parse_known_args()[0]
 
     characters = None
