@@ -26,20 +26,15 @@ def load_json(file_path):
         data = json.load(f) 
     return data
 
-class ListDataset(Dataset):
+class Load_data(object):
     def __init__(self, opt):
-        data = load_json('train_all.json')
-        self.img_path = []
-        self.labels = []
-        for key in data:
-            self.img_path.append(key)
-            self.labels.append(data[key])
         self.characters = None
         self.dataset_loader = DataLoader(opt, self.characters)
         print(len(self.dataset_loader.vocabulary))
-
+        print(self.dataset_loader.all_train)
+        print(self.dataset_loader.all_val)
         self.vocab = self.dataset_loader.vocabulary
-        self.label_len = 148
+        
 
         self.char2token = {"PAD":0}
         self.token2char = {0:"PAD"}
@@ -47,17 +42,30 @@ class ListDataset(Dataset):
             self.char2token[c] = i+1
             self.token2char[i+1] = c
 
+        self.train_loader = torch.utils.data.DataLoader(
+            ListDataset(self.dataset_loader.all_train, self.char2token),
+            batch_size = opt.batch_size,
+            shuffle = True, 
+            num_workers = opt.num_workers)
+
+        self.val_loader = torch.utils.data.DataLoader(
+            ListDataset(self.dataset_loader.all_val, self.char2token),
+            batch_size = opt.batch_size,
+            shuffle = True, 
+            num_workers = opt.num_workers)
+
+class ListDataset(Dataset):
+    def __init__(self, samples, char2token):
+        self.samples = samples
+        self.char2token = char2token
+        self.label_len = 148
     def __len__(self):
-        return len(self.img_path)
+        return len(self.samples)
     
     def __getitem__(self, index):
-        '''
-        line: image path\tlabel
-        '''
-        #line = self.lines[index]
-        #img_path, label_y_str = line.strip('\n').split('\t')
-        img_path = self.img_path[index]
-        label_y_str = self.labels[index]
+
+        img_path = self.samples[index].file_path
+        label_y_str = self.samples[index].label_text
         img = cv2.imread(img_path) / 255.
         # Channels-first
         img = np.transpose(img, (2, 0, 1))
@@ -145,9 +153,9 @@ if __name__=='__main__':
     parser.add_argument('--prediction', type=str, default='ctc', help='Prediction stage. ctc|attn|ace')
     opt = parser.parse_known_args()[0]
 
-    listdataset = ListDataset(opt)
-    dataloader = torch.utils.data.DataLoader(listdataset, batch_size=1, shuffle=False, num_workers=0)
+    Load_data = Load_data(opt)
+    train_dataloader = Load_data.train_loader
     for epoch in range(1):
-        for batch_i, (imgs, labels_y, labels) in enumerate(dataloader):
+        for batch_i, (imgs, labels_y, labels) in enumerate(train_dataloader):
             print('pass')
             continue

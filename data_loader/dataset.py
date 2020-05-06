@@ -83,10 +83,10 @@ class DataLoader(object):
             self.vocabulary = set()
 
         multi_data_getter = MultiDataset()
-        all_train, all_val = multi_data_getter.combine_datasets(opt)
+        self.all_train, self.all_val = multi_data_getter.combine_datasets(opt)
 
         # Load train data 
-        self.train_samples = GetDataset(samples=all_train, \
+        self.train_samples = GetDataset(samples=self.all_train, \
             charset=multi_data_getter.char_set, opt=opt)
         if init_vocab is None:
             self.vocabulary.update(self.train_samples.char_set)
@@ -95,7 +95,7 @@ class DataLoader(object):
         LOGGER.debug("Number of training data: {0}".format(len(self.train_samples)))
 
         # Load validation data 
-        self.val_samples = GetDataset(samples=all_val, \
+        self.val_samples = GetDataset(samples=self.all_val, \
             charset=multi_data_getter.char_set, opt=opt)
         if init_vocab is None:
             self.vocabulary.update(self.val_samples.char_set)
