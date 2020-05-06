@@ -108,7 +108,8 @@ def train(opt):
     train_dataloader = load_data.train_loader
     val_dataloader = load_data.val_loader
     model = make_model(len(char2token))
-    model.load_state_dict(torch.load('your-pretrain-model-path'))
+    if opt.pretrained_path != None:
+        model.load_state_dict(torch.load(opt.pretrained_path))
     model.cuda()
     criterion = LabelSmoothing(size=len(char2token), padding_idx=0, smoothing=0.1)
     criterion.cuda()
@@ -128,13 +129,11 @@ if __name__=='__main__':
     parser = argparse.ArgumentParser()
     """ Data params """
     parser.add_argument('--data_path', default='./data/', help='path to dataset')
-
-
     parser.add_argument('--train_file', default='train.json', help='name of train label file')
     parser.add_argument('--val_file', default='val.json', help='name of train label val')
     parser.add_argument('--test_file', default='test.json', help='name of train label test')
     parser.add_argument('--workers', type=int, help='number of data loading workers', default=4)
-
+    parser.add_argument('--pretrained_path', type=str, default=None, help='Path to pretrained models')
     """ Training params """
     parser.add_argument('--batch_size', type=int, default=64, help='input batch size')
     """ Data processing """
