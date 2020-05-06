@@ -82,7 +82,7 @@ class Batch:
     "Object for holding a batch of data with mask during training."
     def __init__(self, imgs, trg_y, trg, pad=0):
         self.imgs = Variable(imgs.cuda(), requires_grad=False)
-        self.src_mask = Variable(torch.from_numpy(np.ones([imgs.size(0), 1, 36], dtype=np.bool)).cuda())
+        self.src_mask = Variable(torch.from_numpy(np.ones([imgs.size(0), 1, 148], dtype=np.bool)).cuda())
         if trg is not None:
             self.trg = Variable(trg.cuda(), requires_grad=False)
             self.trg_y = Variable(trg_y.cuda(), requires_grad=False)
