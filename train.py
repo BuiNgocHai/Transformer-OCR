@@ -2,9 +2,10 @@ import torch
 import torch.nn as nn
 from torch.autograd import Variable
 import time
+import argparse
 from dataset import ListDataset
-from dataset import char2token
 from dataset import Batch
+from dataset import Load_data
 from model import make_model
 import os
 os.environ["CUDA_VISIBLE_DEVICES"] = "0"
@@ -101,10 +102,11 @@ def run_epoch(dataloader, model, loss_compute):
 
 
 
-def train():
-    batch_size = 64
-    train_dataloader = torch.utils.data.DataLoader(ListDataset(['your-train-lines']), batch_size=batch_size, shuffle=True, num_workers=0)
-    val_dataloader = torch.utils.data.DataLoader(ListDataset('your-test-lines'), batch_size=batch_size, shuffle=False, num_workers=0)
+def train(opt):
+    load_data = Load_data(opt)
+    char2token = load_data.char2token
+    train_dataloader = load_data.train_loader
+    val_dataloader = load_data.val_loader
     model = make_model(len(char2token))
     model.load_state_dict(torch.load('your-pretrain-model-path'))
     model.cuda()
@@ -123,7 +125,30 @@ def train():
         torch.save(model.state_dict(), 'checkpoint/%08d_%f.pth'%(epoch, test_loss))
 
 if __name__=='__main__':
-    train()
+    parser = argparse.ArgumentParser()
+    """ Data params """
+    parser.add_argument('--data_path', default='./data/', help='path to dataset')
+
+
+    parser.add_argument('--train_file', default='train.json', help='name of train label file')
+    parser.add_argument('--val_file', default='val.json', help='name of train label val')
+    parser.add_argument('--test_file', default='test.json', help='name of train label test')
+    parser.add_argument('--workers', type=int, help='number of data loading workers', default=4)
+
+    """ Training params """
+    parser.add_argument('--batch_size', type=int, default=64, help='input batch size')
+    """ Data processing """
+    parser.add_argument('--img_height', type=int, default=64, help='the height of the input image')
+    parser.add_argument('--img_width', type=int, default=1500, help='the width of the input image, before=800')
+    parser.add_argument('--normalize_text', action='store_false', help='normalizing text label')
+    parser.add_argument('--padding', action='store_false', help='whether to keep ratio then pad for image resize')
+    parser.add_argument('--augment', action='store_false', help='whether to augment data or not')
+
+    """ Model Architecture """
+    parser.add_argument('--prediction', type=str, default='ctc', help='Prediction stage. ctc|attn|ace')
+    opt = parser.parse_known_args()[0]
+
+    train(opt)
 
 
 
