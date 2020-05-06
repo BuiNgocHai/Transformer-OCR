@@ -11,31 +11,13 @@ import json
 from data_loader.dataset import  DataLoader
 
 
-
-
-def illegal(label):
-    if len(label) > label_len-1:
-        return True
-    for l in label:
-        if l not in vocab[1:-1]:
-            return True
-    return False
-
-def load_json(file_path):
-    with open(file_path) as f:
-        data = json.load(f) 
-    return data
-
 class Load_data(object):
     def __init__(self, opt):
         self.characters = None
         self.dataset_loader = DataLoader(opt, self.characters)
         print(len(self.dataset_loader.vocabulary))
-        print(self.dataset_loader.all_train)
-        print(self.dataset_loader.all_val)
         self.vocab = self.dataset_loader.vocabulary
         
-
         self.char2token = {"PAD":0}
         self.token2char = {0:"PAD"}
         for i, c in enumerate(self.vocab):
@@ -46,13 +28,13 @@ class Load_data(object):
             ListDataset(self.dataset_loader.all_train, self.char2token),
             batch_size = opt.batch_size,
             shuffle = True, 
-            num_workers = opt.num_workers)
+            num_workers = 0)
 
         self.val_loader = torch.utils.data.DataLoader(
             ListDataset(self.dataset_loader.all_val, self.char2token),
             batch_size = opt.batch_size,
             shuffle = True, 
-            num_workers = opt.num_workers)
+            num_workers = 0)
 
 class ListDataset(Dataset):
     def __init__(self, samples, char2token):
@@ -66,6 +48,7 @@ class ListDataset(Dataset):
 
         img_path = self.samples[index].file_path
         label_y_str = self.samples[index].label_text
+
         img = cv2.imread(img_path) / 255.
         # Channels-first
         img = np.transpose(img, (2, 0, 1))
@@ -141,7 +124,7 @@ if __name__=='__main__':
     parser.add_argument('--workers', type=int, help='number of data loading workers', default=4)
 
     """ Training params """
-    parser.add_argument('--batch_size', type=int, default=32, help='input batch size')
+    parser.add_argument('--batch_size', type=int, default=1, help='input batch size')
     """ Data processing """
     parser.add_argument('--img_height', type=int, default=64, help='the height of the input image')
     parser.add_argument('--img_width', type=int, default=1500, help='the width of the input image, before=800')
